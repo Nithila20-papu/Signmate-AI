@@ -322,7 +322,6 @@ hr {
 # 3. SIGNMATE VIDEO PROCESSOR
 #    Recognition logic retained from your original code.
 # =========================================================
-
 class SignMateVideoProcessor(VideoProcessorBase):
 
     def __init__(self):
@@ -335,10 +334,13 @@ class SignMateVideoProcessor(VideoProcessorBase):
 
         try:
             with self.lock:
-                image = self.recognizer.process_frame(image)
+                processed_image = self.recognizer.process_frame(image)
+
+            if processed_image is not None:
+                image = processed_image
 
         except Exception as error:
-            print("Processing error:", error)
+            print("Processing error:", repr(error))
 
         return av.VideoFrame.from_ndarray(
             image,
@@ -348,7 +350,6 @@ class SignMateVideoProcessor(VideoProcessorBase):
     def start_prediction(self):
         with self.lock:
             self.recognizer.start_prediction()
-            print("Prediction started!")
 
     def get_status(self):
         with self.lock:
@@ -358,8 +359,6 @@ class SignMateVideoProcessor(VideoProcessorBase):
                 "confidence": float(self.recognizer.confidence),
                 "frames": len(self.recognizer.sequence)
             }
-
-
 # =========================================================
 # 4. WEBSITE HEADER
 # =========================================================
@@ -712,11 +711,7 @@ with live_tab:
     """, unsafe_allow_html=True)
 
     # Refresh the recognition status while this tab is being used.
-    st_autorefresh(
-        interval=700,
-        key="signmate_main_refresh"
-    )
-
+   
 
 # =========================================================
 # 12. OUR TEAM
