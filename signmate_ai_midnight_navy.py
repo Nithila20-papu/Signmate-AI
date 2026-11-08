@@ -598,13 +598,19 @@ with tech_tab:
 # 11. LIVE SIGN RECOGNITION
 # =========================================================
 
+# =========================================================
+# 11. LIVE SIGN RECOGNITION
+# =========================================================
+
 with live_tab:
+
     st.subheader("📷 Live Sign Detection")
     st.write("Position your hand in front of the camera.")
 
     left, right = st.columns([1.5, 1], gap="large")
 
     with left:
+
         ctx = webrtc_streamer(
             key="signmate-final-test",
             mode=WebRtcMode.SENDRECV,
@@ -630,6 +636,7 @@ with live_tab:
         )
 
     with right:
+
         st.subheader("💬 Translation Output")
 
         start_button = st.button(
@@ -638,14 +645,17 @@ with live_tab:
         )
 
         if start_button:
+
             if ctx.video_processor is not None:
                 ctx.video_processor.start_prediction()
                 st.success("Prediction started! Show your hand.")
+
             else:
                 st.warning("Please start the camera first.")
 
     st.divider()
 
+    # Automatically refresh only the recognition status.
     @st.fragment(run_every="1s")
     def render_recognition_status():
 
@@ -654,6 +664,7 @@ with live_tab:
         if ctx.video_processor is not None:
 
             try:
+
                 data = ctx.video_processor.get_status()
 
                 state = data["state"]
@@ -706,15 +717,17 @@ with live_tab:
 
             except Exception as error:
 
-                st.error(f"Unable to retrieve prediction: {error}")
+                st.error(
+                    f"Unable to retrieve prediction: {error}"
+                )
 
         else:
 
             st.info("Start the camera to begin recognition.")
 
+    render_recognition_status()
 
-render_recognition_status()
-
+    # Usage and limitations note
     st.markdown("""
     <div class="info-card" style="margin-top:18px;">
         <h3>Usage &amp; Limitations</h3>
@@ -726,13 +739,6 @@ render_recognition_status()
         learning; it may not interpret every sign or replace a qualified sign-language interpreter.</p>
     </div>
     """, unsafe_allow_html=True)
-
-    # Refresh the recognition status while this tab is being used.
-    st_autorefresh(
-        interval=700,
-        key="signmate_main_refresh"
-    )
-
 
 # =========================================================
 # 12. OUR TEAM
