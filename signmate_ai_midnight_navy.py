@@ -322,6 +322,7 @@ hr {
 # 3. SIGNMATE VIDEO PROCESSOR
 #    Recognition logic retained from your original code.
 # =========================================================
+
 class SignMateVideoProcessor(VideoProcessorBase):
 
     def __init__(self):
@@ -334,13 +335,10 @@ class SignMateVideoProcessor(VideoProcessorBase):
 
         try:
             with self.lock:
-                processed_image = self.recognizer.process_frame(image)
-
-            if processed_image is not None:
-                image = processed_image
+                image = self.recognizer.process_frame(image)
 
         except Exception as error:
-            print("Processing error:", repr(error))
+            print("Processing error:", error)
 
         return av.VideoFrame.from_ndarray(
             image,
@@ -350,6 +348,7 @@ class SignMateVideoProcessor(VideoProcessorBase):
     def start_prediction(self):
         with self.lock:
             self.recognizer.start_prediction()
+            print("Prediction started!")
 
     def get_status(self):
         with self.lock:
@@ -359,6 +358,8 @@ class SignMateVideoProcessor(VideoProcessorBase):
                 "confidence": float(self.recognizer.confidence),
                 "frames": len(self.recognizer.sequence)
             }
+
+
 # =========================================================
 # 4. WEBSITE HEADER
 # =========================================================
@@ -643,10 +644,15 @@ with live_tab:
             else:
                 st.warning("Please start the camera first.")
 
-        st.divider()
+    st.divider()
+
+    @st.fragment(run_every="1s")
+    def render_recognition_status():
+
         st.subheader("Recognition Status")
 
         if ctx.video_processor is not None:
+
             try:
                 data = ctx.video_processor.get_status()
 
@@ -666,37 +672,48 @@ with live_tab:
                 st.info(status_messages.get(state, state))
 
                 valid_prediction = (
-                    prediction.strip().lower() not in
-                    ("none", "", "null")
+                    prediction.strip().lower()
+                    not in ("none", "", "null")
                 )
 
                 if valid_prediction:
+
                     with st.container(key="prediction_card"):
+
                         st.markdown("**RECOGNIZED SIGN**")
                         st.markdown(f"# {prediction}")
 
                     with st.container(key="confidence_card"):
+
                         st.markdown("**RECOGNITION CONFIDENCE**")
                         st.markdown(f"## {confidence:.2f}%")
 
                 else:
+
                     st.info("Your recognized sign will appear here.")
 
                     with st.container(key="confidence_card"):
+
                         st.markdown("**RECOGNITION CONFIDENCE**")
                         st.markdown("## Waiting for prediction...")
 
                 if state == "RECORDING":
+
                     st.progress(
                         min(frames / 20, 1.0),
                         text=f"Recording: {frames}/20 frames"
                     )
 
             except Exception as error:
+
                 st.error(f"Unable to retrieve prediction: {error}")
 
         else:
+
             st.info("Start the camera to begin recognition.")
+
+
+render_recognition_status()
 
     st.markdown("""
     <div class="info-card" style="margin-top:18px;">
@@ -711,7 +728,11 @@ with live_tab:
     """, unsafe_allow_html=True)
 
     # Refresh the recognition status while this tab is being used.
-   
+    st_autorefresh(
+        interval=700,
+        key="signmate_main_refresh"
+    )
+
 
 # =========================================================
 # 12. OUR TEAM
